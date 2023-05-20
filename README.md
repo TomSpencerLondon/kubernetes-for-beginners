@@ -63,12 +63,156 @@ If you do not want to delete and create a new cluster every time, we can reduce 
 After finishing our work for the day we can reduce cluster node size to zero.
 ```bash
 gcloud container clusters resize --zone <name_of_zone> <name_of_your_cluster> --num-nodes=0
+gcloud container clusters resize --zone us-central1 in28minutes-cluster --num-nodes=0
 ```
 When we are ready to start again, increase the number of nodes:
 ```bash
 gcloud container clusters resize --zone <name_of_zone> <name_of_your_cluster> --num-nodes=3
 ```
 
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/e099536d-7d47-4a6b-96ed-79e85580c197)
 
+We can get events with:
+```bash
+kubectl get events
+```
 
+We can also get information about the cluster with the following:
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-5b4c66787d-gdznr   1/1     Running   0          14m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-5b4c66787d   1         1         1       14m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get service
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.50.128.184   104.197.69.62   8080:31534/TCP   13m
+kubernetes             ClusterIP      10.50.128.1     <none>          443/TCP          3h43m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get deployment
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+hello-world-rest-api   1/1     1            1           15m
+```
+Each of the above commands have specific responsibilities.
+This link is useful for kubernetes commands:
+https://github.com/in28minutes/kubernetes-crash-course#commands-executed-during-the-course
+
+### Understanding Pods in Kubernetes
+
+Pods are the most important concept in Kubernetes. It is the smallest deployment unit in Kubernetes.
+If I want to create a container in Kubernetes we have to use a Pod. The container lives inside a Pod.
+
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP            NODE                                           NOMINATED NODE   READINESS GATES
+hello-world-rest-api-5b4c66787d-gdznr   1/1     Running   0          19m   10.50.0.130   gk3-in28minutes-cluster-pool-1-bdc4a129-khq2   <none>           <none>
+```
+Each Pod has an IP address. Each Pod has a description of the number of containers in the Pod. All the containers in the Pod share resources.
+Within the Pod containers can talk to each other on localhost. 
+
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl explain pods
+KIND:       Pod
+VERSION:    v1
+
+DESCRIPTION:
+    Pod is a collection of containers that can run on a host. This resource is
+    created by clients and scheduled onto hosts.
+    
+FIELDS:
+  apiVersion    <string>
+    APIVersion defines the versioned schema of this representation of an object.
+    Servers should convert recognized schemas to the latest internal value, and
+    may reject unrecognized values. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+
+  kind  <string>
+    Kind is a string value representing the REST resource this object
+    represents. Servers may infer this from the endpoint the client submits
+    requests to. Cannot be updated. In CamelCase. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+
+  metadata      <ObjectMeta>
+    Standard object's metadata. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+
+  spec  <PodSpec>
+    Specification of the desired behavior of the pod. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+
+  status        <PodStatus>
+    Most recently observed status of the pod. This data may not be up to date.
+    Populated by the system. Read-only. More info:
+    https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+```
+A Kubernetes node contains multiple Pods.
+
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl describe pod hello-world-rest-api-5b4c66787d-gdznr
+Name:             hello-world-rest-api-5b4c66787d-gdznr
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             gk3-in28minutes-cluster-pool-1-bdc4a129-khq2/10.128.0.16
+Start Time:       Sat, 20 May 2023 21:56:39 +0000
+Labels:           app=hello-world-rest-api
+                  pod-template-hash=5b4c66787d
+Annotations:      <none>
+Status:           Running
+SeccompProfile:   RuntimeDefault
+IP:               10.50.0.130
+IPs:
+  IP:           10.50.0.130
+Controlled By:  ReplicaSet/hello-world-rest-api-5b4c66787d
+Containers:
+  hello-world-rest-api:
+    Container ID:   containerd://8b126d0874914162ce1525a5722badf3f7af688b42cfe6e34abe633c8ff38c6d
+    Image:          in28min/hello-world-rest-api:0.0.1.RELEASE
+    Image ID:       docker.io/in28min/hello-world-rest-api@sha256:00469c343814aabe56ad1034427f546d43bafaaa11208a1eb0720993743f72be
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Sat, 20 May 2023 21:57:31 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:                500m
+      ephemeral-storage:  1Gi
+      memory:             2Gi
+    Requests:
+      cpu:                500m
+      ephemeral-storage:  1Gi
+      memory:             2Gi
+    Environment:          <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-pqw2s (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  kube-api-access-pqw2s:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 kubernetes.io/arch=amd64:NoSchedule
+                             node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From                                   Message
+  ----     ------            ----  ----                                   -------
+  Warning  FailedScheduling  22m   gke.io/optimize-utilization-scheduler  0/2 nodes are available: 2 Insufficient cpu, 2 Insufficient memory. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod.
+  Normal   TriggeredScaleUp  22m   cluster-autoscaler                     pod triggered scale-up: [{https://www.googleapis.com/compute/v1/projects/devops-rnd-383110/zones/us-central1-b/instanceGroups/gk3-in28minutes-cluster-pool-1-bdc4a129-grp 0->1 (max: 1000)}]
+  Normal   Scheduled         21m   gke.io/optimize-utilization-scheduler  Successfully assigned default/hello-world-rest-api-5b4c66787d-gdznr to gk3-in28minutes-cluster-pool-1-bdc4a129-khq2
+  Normal   Pulling           20m   kubelet                                Pulling image "in28min/hello-world-rest-api:0.0.1.RELEASE"
+  Normal   Pulled            20m   kubelet                                Successfully pulled image "in28min/hello-world-rest-api:0.0.1.RELEASE" in 11.129463978s (11.129792404s including waiting)
+  Normal   Created           20m   kubelet                                Created container hello-world-rest-api
+  Normal   Started           20m   kubelet                                Started container hello-world-rest-api
+```
 
