@@ -55,4 +55,20 @@ kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
 We can now access the application on the ingress port:
 ![image](https://github.com/TomSpencerLondon/LeetCode/assets/27693622/2c137020-c875-44f9-b7ca-1f762e225248)
 
+### Cleaning up
+In the cloud, it is best practice to delete the resources when we are not using them.
+
+If you do not want to delete and create a new cluster every time, we can reduce the cluster size to zero.
+
+After finishing our work for the day we can reduce cluster node size to zero.
+```bash
+gcloud container clusters resize --zone <name_of_zone> <name_of_your_cluster> --num-nodes=0
+```
+When we are ready to start again, increase the number of nodes:
+```bash
+gcloud container clusters resize --zone <name_of_zone> <name_of_your_cluster> --num-nodes=3
+```
+
+
+
 
