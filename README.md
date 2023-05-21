@@ -367,3 +367,51 @@ hello-world-rest-api-5b4c66787d   0         0         0       10h
 hello-world-rest-api-77b5fbc7     0         0         0       6m5s
 hello-world-rest-api-8674b858bf   3         3         3       37s
 ```
+We have now deployed v2:
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/728206d7-df35-43ae-8ef6-378580229037)
+
+The events show a successful update:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl get events --sort-by=.metadata.creationTimestamp
+LAST SEEN   TYPE      REASON              OBJECT                                       MESSAGE
+8m9s        Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-77b5fbc7 to 1
+8m9s        Normal    Scheduled           pod/hello-world-rest-api-77b5fbc7-b5ksf      Successfully assigned default/hello-world-rest-api-77b5fbc7-b5ksf to gk3-in28minutes-cluster-pool-1-f9bc7297-bw9c
+8m9s        Normal    SuccessfulCreate    replicaset/hello-world-rest-api-77b5fbc7     Created pod: hello-world-rest-api-77b5fbc7-b5ksf
+3m5s        Warning   InspectFailed       pod/hello-world-rest-api-77b5fbc7-b5ksf      Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
+5m56s       Warning   Failed              pod/hello-world-rest-api-77b5fbc7-b5ksf      Error: InvalidImageName
+2m41s       Warning   FailedScheduling    pod/hello-world-rest-api-8674b858bf-44gf7    0/4 nodes are available: 2 Insufficient cpu, 4 Insufficient memory. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod.
+2m41s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-8674b858bf   Created pod: hello-world-rest-api-8674b858bf-44gf7
+2m41s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-8674b858bf to 1 from 0
+2m41s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-77b5fbc7 to 0 from 1
+2m41s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-77b5fbc7     Deleted pod: hello-world-rest-api-77b5fbc7-b5ksf
+2m39s       Normal    Scheduled           pod/hello-world-rest-api-8674b858bf-44gf7    Successfully assigned default/hello-world-rest-api-8674b858bf-44gf7 to gk3-in28minutes-cluster-pool-1-f9bc7297-bw9c
+2m37s       Normal    Pulling             pod/hello-world-rest-api-8674b858bf-44gf7    Pulling image "in28min/hello-world-rest-api:0.0.2.RELEASE"
+2m36s       Normal    Pulled              pod/hello-world-rest-api-8674b858bf-44gf7    Successfully pulled image "in28min/hello-world-rest-api:0.0.2.RELEASE" in 1.608462088s (1.60853043s including waiting)
+2m36s       Normal    Created             pod/hello-world-rest-api-8674b858bf-44gf7    Created container hello-world-rest-api
+2m35s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-5b4c66787d to 2 from 3
+2m33s       Normal    Killing             pod/hello-world-rest-api-5b4c66787d-865sb    Stopping container hello-world-rest-api
+2m35s       Normal    Started             pod/hello-world-rest-api-8674b858bf-44gf7    Started container hello-world-rest-api
+2m35s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-8674b858bf to 2 from 1
+2m35s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-8674b858bf   Created pod: hello-world-rest-api-8674b858bf-n9r98
+2m35s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-5b4c66787d   Deleted pod: hello-world-rest-api-5b4c66787d-865sb
+2m35s       Warning   FailedScheduling    pod/hello-world-rest-api-8674b858bf-n9r98    0/4 nodes are available: 2 Insufficient cpu, 4 Insufficient memory. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod.
+2m34s       Normal    Scheduled           pod/hello-world-rest-api-8674b858bf-n9r98    Successfully assigned default/hello-world-rest-api-8674b858bf-n9r98 to gk3-in28minutes-cluster-pool-1-bdc4a129-khq2
+2m32s       Normal    Pulling             pod/hello-world-rest-api-8674b858bf-n9r98    Pulling image "in28min/hello-world-rest-api:0.0.2.RELEASE"
+2m30s       Normal    Pulled              pod/hello-world-rest-api-8674b858bf-n9r98    Successfully pulled image "in28min/hello-world-rest-api:0.0.2.RELEASE" in 1.672359762s (1.67244215s including waiting)
+2m30s       Normal    Created             pod/hello-world-rest-api-8674b858bf-n9r98    Created container hello-world-rest-api
+2m29s       Normal    Started             pod/hello-world-rest-api-8674b858bf-n9r98    Started container hello-world-rest-api
+2m28s       Normal    Killing             pod/hello-world-rest-api-5b4c66787d-gdznr    Stopping container hello-world-rest-api
+2m28s       Normal    SuccessfulCreate    replicaset/hello-world-rest-api-8674b858bf   Created pod: hello-world-rest-api-8674b858bf-l9857
+2m28s       Warning   FailedScheduling    pod/hello-world-rest-api-8674b858bf-l9857    0/4 nodes are available: 2 Insufficient cpu, 4 Insufficient memory. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod.
+2m28s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-5b4c66787d   Deleted pod: hello-world-rest-api-5b4c66787d-gdznr
+2m28s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-5b4c66787d to 1 from 2
+2m28s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled up replica set hello-world-rest-api-8674b858bf to 3 from 2
+2m27s       Normal    Scheduled           pod/hello-world-rest-api-8674b858bf-l9857    Successfully assigned default/hello-world-rest-api-8674b858bf-l9857 to gk3-in28minutes-cluster-pool-1-bdc4a129-khq2
+2m25s       Normal    Created             pod/hello-world-rest-api-8674b858bf-l9857    Created container hello-world-rest-api
+2m25s       Normal    Pulled              pod/hello-world-rest-api-8674b858bf-l9857    Container image "in28min/hello-world-rest-api:0.0.2.RELEASE" already present on machine
+2m24s       Normal    Started             pod/hello-world-rest-api-8674b858bf-l9857    Started container hello-world-rest-api
+2m22s       Normal    Killing             pod/hello-world-rest-api-5b4c66787d-4hldr    Stopping container hello-world-rest-api
+2m22s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-5b4c66787d   Deleted pod: hello-world-rest-api-5b4c66787d-4hldr
+2m22s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-5b4c66787d to 0 from 1
+```
+The deployment uses rolling updates. It adds one pod at a time and increases and decreases pods as the operations are successful.
