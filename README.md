@@ -598,6 +598,152 @@ We can scale the amount of pods with:
 tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl scale deployment hello-world-rest-api --replicas=3
 deployment.apps/hello-world-rest-api scaled
 ```
+We can record the changes for our rollouts with --record:
 
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl rollout history deployment hello-world-rest-api
+deployment.apps/hello-world-rest-api 
+REVISION  CHANGE-CAUSE
+1         <none>
 
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl rollout status deployment hello-world-rest-api
+deployment "hello-world-rest-api" successfully rolled out
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl set image deployment hello-world-rest-api hello-world-rest-api=tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT --record
+Flag --record has been deprecated, --record will be removed in the future
+deployment.apps/hello-world-rest-api image updated
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl rollout history deployment hello-world-rest-api
+deployment.apps/hello-world-rest-api 
+REVISION  CHANGE-CAUSE
+1         kubectl set image deployment hello-world-rest-api hello-world-rest-api=tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT --record=true
+
+```
+We can undo deployments:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl rollout undo deployment hello-world-rest-api --to-revision=1
+deployment.apps/hello-world-rest-api skipped rollback (current template already matches revision 1)
+```
+
+We can review the logs of the application:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-6649f4796d-m46xn   1/1     Running   0          5m58s
+hello-world-rest-api-6649f4796d-n67fx   1/1     Running   0          5m58s
+hello-world-rest-api-6649f4796d-pwbcf   1/1     Running   0          5h54m
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl logs hello-world-rest-api-6649f4796d-m46xn
+```
+We can watch the url with:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ watch curl http://34.70.221.222:8080/hello-world
+```
+
+We can get a yaml file with the details of the deployment:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get deployment hello-world-rest-api -o yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    autopilot.gke.io/resource-adjustment: '{"input":{"containers":[{"name":"hello-world-rest-api"}]},"output":{"containers":[{"limits":{"cpu":"500m","ephemeral-storage":"1Gi","memory":"2Gi"},"requests":{"cpu":"500m","ephemeral-storage":"1Gi","memory":"2Gi"},"name":"hello-world-rest-api"}]},"modified":true}'
+    deployment.kubernetes.io/revision: "1"
+    kubernetes.io/change-cause: kubectl set image deployment hello-world-rest-api
+      hello-world-rest-api=tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT --record=true
+  creationTimestamp: "2023-05-21T17:37:34Z"
+  generation: 3
+  labels:
+    app: hello-world-rest-api
+  name: hello-world-rest-api
+  namespace: default
+  resourceVersion: "266091"
+  uid: f9d60db0-7d06-4175-b4b1-0a829770037b
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: hello-world-rest-api
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hello-world-rest-api
+    spec:
+      containers:
+      - image: tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT
+        imagePullPolicy: IfNotPresent
+        name: hello-world-rest-api
+        resources:
+          limits:
+            cpu: 500m
+            ephemeral-storage: 1Gi
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            ephemeral-storage: 1Gi
+            memory: 2Gi
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
+status:
+  availableReplicas: 3
+  conditions:
+  - lastTransitionTime: "2023-05-21T17:37:34Z"
+    lastUpdateTime: "2023-05-21T17:39:27Z"
+    message: ReplicaSet "hello-world-rest-api-6649f4796d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2023-05-21T23:28:28Z"
+    lastUpdateTime: "2023-05-21T23:28:28Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 3
+  readyReplicas: 3
+  replicas: 3
+  updatedReplicas: 3
+
+```
+We can also save the information in a yaml file:
+
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get deployment hello-world-rest-api -o yaml > deployment.yaml
+```
+We can also save information about the service:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get service hello-world-rest-api -o yaml > service.yaml
+```
+
+We can then change the replicas in the yaml file and apply the changes:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl apply -f deployment.yaml
+Warning: resource deployments/hello-world-rest-api is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+deployment.apps/hello-world-rest-api configured
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-6649f4796d-n67fx   1/1     Running   0          14m
+hello-world-rest-api-6649f4796d-pwbcf   1/1     Running   0          6h3m
+```
 
