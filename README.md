@@ -286,5 +286,68 @@ hello-world-rest-api-5b4c66787d-4hldr   1/1     Running            0          10
 hello-world-rest-api-5b4c66787d-865sb   1/1     Running            0          10h
 hello-world-rest-api-5b4c66787d-gdznr   1/1     Running            0          10h
 hello-world-rest-api-77b5fbc7-b5ksf     0/1     InvalidImageName   0          103s
+
+tomspencerlondon@cloudshell:~$ kubectl describe pod hello-world-rest-api-77b5fbc7-b5ksf
+Name:             hello-world-rest-api-77b5fbc7-b5ksf
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             gk3-in28minutes-cluster-pool-1-f9bc7297-bw9c/10.128.0.17
+Start Time:       Sun, 21 May 2023 08:47:04 +0000
+Labels:           app=hello-world-rest-api
+                  pod-template-hash=77b5fbc7
+Annotations:      <none>
+Status:           Pending
+SeccompProfile:   RuntimeDefault
+IP:               10.50.0.197
+IPs:
+  IP:           10.50.0.197
+Controlled By:  ReplicaSet/hello-world-rest-api-77b5fbc7
+Containers:
+  hello-world-rest-api:
+    Container ID:   
+    Image:          DUMMY_IMAGE:TEST
+    Image ID:       
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       InvalidImageName
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:                500m
+      ephemeral-storage:  1Gi
+      memory:             2Gi
+    Requests:
+      cpu:                500m
+      ephemeral-storage:  1Gi
+      memory:             2Gi
+    Environment:          <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-w9f8s (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             False 
+  ContainersReady   False 
+  PodScheduled      True 
+Volumes:
+  kube-api-access-w9f8s:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 kubernetes.io/arch=amd64:NoSchedule
+                             node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason         Age                   From                                   Message
+  ----     ------         ----                  ----                                   -------
+  Normal   Scheduled      2m39s                 gke.io/optimize-utilization-scheduler  Successfully assigned default/hello-world-rest-api-77b5fbc7-b5ksf to gk3-in28minutes-cluster-pool-1-f9bc7297-bw9c
+  Warning  Failed         26s (x12 over 2m37s)  kubelet                                Error: InvalidImageName
+  Warning  InspectFailed  12s (x13 over 2m37s)  kubelet                                Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
 ```
 
