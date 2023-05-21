@@ -414,4 +414,141 @@ LAST SEEN   TYPE      REASON              OBJECT                                
 2m22s       Normal    SuccessfulDelete    replicaset/hello-world-rest-api-5b4c66787d   Deleted pod: hello-world-rest-api-5b4c66787d-4hldr
 2m22s       Normal    ScalingReplicaSet   deployment/hello-world-rest-api              Scaled down replica set hello-world-rest-api-5b4c66787d to 0 from 1
 ```
-The deployment uses rolling updates. It adds one pod at a time and increases and decreases pods as the operations are successful.
+The deployment uses rolling updates. It adds one pod at a time and increases and decreases pods as the operations are successful. Replica Sets ensure that the desired number of pods are always running.
+Replica Sets are tied to specific versions. 
+
+#### Understanding Services in Kubernetes
+To understand the usefulness of services we can look at our pods:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP            NODE                                           NOMINATED NODE   READINESS GATES
+hello-world-rest-api-8674b858bf-44gf7   1/1     Running   0          32m   10.50.0.198   gk3-in28minutes-cluster-pool-1-f9bc7297-bw9c   <none>           <none>
+hello-world-rest-api-8674b858bf-l9857   1/1     Running   0          32m   10.50.0.138   gk3-in28minutes-cluster-pool-1-bdc4a129-khq2   <none>           <none>
+hello-world-rest-api-8674b858bf-n9r98   1/1     Running   0          32m   10.50.0.137   gk3-in28minutes-cluster-pool-1-bdc4a129-khq2   <none>           <none>
+```
+We can delete a pod:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl delete pod hello-world-rest-api-8674b858bf-n9r98
+pod "hello-world-rest-api-8674b858bf-n9r98" deleted
+```
+
+The pod is deleted. We don't want the url to change. The service allows us to delete and create pods without changing the url.
+The pod is throwaway but the service remains irrespective of the changes to the pods. The service was created when we exposed the
+deployment. We are using a loadbalancer service.
+
+```bash
+tomspencerlondon@cloudshell:~$ kubectl get services
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.50.128.184   104.197.69.62   8080:31534/TCP   18h
+kubernetes             ClusterIP      10.50.128.1     <none>          443/TCP          21h
+```
+The cluster IP service can only be accessed from within the cluster. 
+
+
+### Understanding Kubernetes Architecture - Master Node and Nodes
+The distributed database for the master node is kept in etcd. The API server
+is kept in kube-apiserver. The kube-scheduler and the kube-controller-manager are also part of the master node.
+The kubernetes cluster state is kept in the etcd distributed database. Kubectl speaks to the cluster through the API
+server. The scheduler is responsible for scheduling the nodes on the cluster. The controller manager manages the overall
+health of the cluster. The kube-controller-manager executes the desired state of the cluster: 
+
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/52bf2b05-a0c3-4c44-8bfc-12dbe47e37d7)
+
+The worker nodes:
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/0d1db462-5d8a-4e35-9d06-9e4ebed6559c)
+
+In a single node we might have several pods. The node agent reports the state of a pod to the controller manager.
+The netwroking component helps with exposing services for the nodes. The container runtime provides the environment for running
+the pods.
+
+Both the master nodes and the worker nodes are kept in the cluster. If a master node goes down the applications will continue working.
+The master node is not in charge of access to the url. We wouldn't be able to make changes.
+
+```bash
+tomspencerlondon@cloudshell:~$ kubectl get componentstatuses
+Warning: v1 ComponentStatus is deprecated in v1.19+
+NAME                 STATUS    MESSAGE             ERROR
+controller-manager   Healthy   ok                  
+scheduler            Healthy   ok                  
+etcd-0               Healthy   {"health":"true"}   
+etcd-1               Healthy   {"health":"true"}   
+```
+
+#### Understanding google cloud regions and zones
+This link shows the available regions and zones for google cloud:
+https://cloud.google.com/about/locations
+
+### Using Kubernetes and Docker with Spring Boot Hello World Rest API
+
+This is the dockerfile for our hello-world-rest-api:
+````dockerfile
+FROM openjdk:8-jdk-alpine
+VOLUME /tmp
+EXPOSE 8080
+ADD target/*.jar app.jar
+ENTRYPOINT [ "sh", "-c", "java -jar /app.jar" ]
+````
+
+We build our application with:
+```bash
+mvn clean install
+```
+This also builds the image with this configuration:
+```xml
+	<build>
+		<finalName>hello-world-rest-api</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<!-- Docker -->
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>1.4.8</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>build</goal>
+							<!-- <goal>push</goal> -->
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repository>tomspencerlondon/${project.name}</repository>
+					<tag>${project.version}</tag>
+<!--					<skipDockerInfo>true</skipDockerInfo>-->
+				</configuration>
+			</plugin>
+
+		</plugins>
+
+	</build>
+```
+
+Our image is built:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-for-beginners$ docker images
+REPOSITORY                     TAG              IMAGE ID       CREATED          SIZE
+in28min/hello-world-rest-api   0.0.4-SNAPSHOT   a8a4573385cd   45 seconds ago   122MB
+```
+We can run the docker image with:
+```bash
+docker run -p 8080:8080 in28min/hello-world-rest-api:0.0.4-SNAPSHOT 
+```
+
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/347d2b9e-a149-473c-8e7f-dd4372f80141)
+
+We need to build the image with our repository name and then we can push the image to docker hub.
+We add our repository name to the repository section of the build docker image step above and then we can push the image to dockerhub.
+
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-for-beginners$ docker push tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT
+```
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/6ece2257-bbfc-4723-8ea9-bd569f6fee22)
+
+
+
+
