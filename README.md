@@ -216,3 +216,75 @@ Events:
   Normal   Started           20m   kubelet                                Started container hello-world-rest-api
 ```
 
+Pods provide a way to put containers together with labels and an IP address.
+
+### Understanding Replicasets
+
+Replicasets ensure a specific number of Pods are running:
+
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get replicasets
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-5b4c66787d   1         1         1       25m
+
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP            NODE                                           NOMINATED NODE   READINESS GATES
+hello-world-rest-api-5b4c66787d-gdznr   1/1     Running   0          27m   10.50.0.130   gk3-in28minutes-cluster-pool-1-bdc4a129-khq2   <none>           <none>
+```
+
+If we delete a pod a new pod will be automatically created. The Replicaset creates Pods to match the desired state.
+
+To scale our deployment we can run:
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl scale deployment hello-world-rest-api --replicas=3
+deployment.apps/hello-world-rest-api scaled
+```
+
+We can get information on a kubernetes cluser with the following:
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-5b4c66787d   3         3         3       31m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get replicaset
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-5b4c66787d   3         3         3       32m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-5b4c66787d-4hldr   1/1     Running   0          3m8s
+hello-world-rest-api-5b4c66787d-865sb   1/1     Running   0          3m8s
+hello-world-rest-api-5b4c66787d-gdznr   1/1     Running   0          32m
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl get events --sort-by=.metadata.creationTimestamp
+```
+
+We can ask kubernetes to explain replicasets:
+```bash
+tomspencerlondon@cloudshell:~ (devops-rnd-383110)$ kubectl explain replicaset
+GROUP:      apps
+KIND:       ReplicaSet
+VERSION:    v1
+
+DESCRIPTION:
+    ReplicaSet ensures that a specified number of pod replicas are running at
+    any given time.
+```
+Kubernetes protects us from errors in image upload:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl set image deployment hello-world-rest-api hello-world-rest-api=DUMMY_IMAGE:TEST
+deployment.apps/hello-world-rest-api image updated
+```
+
+The replicaset protects us because we have a desired state:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl get rs -o wide
+NAME                              DESIRED   CURRENT   READY   AGE   CONTAINERS             IMAGES                                       SELECTOR
+hello-world-rest-api-5b4c66787d   3         3         3       10h   hello-world-rest-api   in28min/hello-world-rest-api:0.0.1.RELEASE   app=hello-world-rest-api,pod-template-hash=5b4c66787d
+hello-world-rest-api-77b5fbc7     1         1         0       58s   hello-world-rest-api   DUMMY_IMAGE:TEST                             app=hello-world-rest-api,pod-template-hash=77b5fbc7
+
+tomspencerlondon@cloudshell:~$ kubectl get pods
+NAME                                    READY   STATUS             RESTARTS   AGE
+hello-world-rest-api-5b4c66787d-4hldr   1/1     Running            0          10h
+hello-world-rest-api-5b4c66787d-865sb   1/1     Running            0          10h
+hello-world-rest-api-5b4c66787d-gdznr   1/1     Running            0          10h
+hello-world-rest-api-77b5fbc7-b5ksf     0/1     InvalidImageName   0          103s
+```
+
