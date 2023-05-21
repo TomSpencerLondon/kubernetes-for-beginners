@@ -549,6 +549,55 @@ tom@tom-ubuntu:~/Projects/kubernetes-for-beginners$ docker push tomspencerlondon
 ```
 ![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/6ece2257-bbfc-4723-8ea9-bd569f6fee22)
 
+### Using gcloud
+We need gcloud and kubectl to deploy our application from the command line on our machine.
+To login to gcloud we run:
+```bash
+tom@tom-ubuntu:~$ gcloud auth login
+```
+We can now connect to the cluster we created earlier:
+```bash
+tom@tom-ubuntu:~$ gcloud container clusters get-credentials in28minutes-cluster --region us-central1 --project devops-rnd-383110
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for in28minutes-cluster.
+```
+
+
+
+
+
+### Deploy 01 Spring Boot Hello World Rest API to Kubernetes
+
+We can create our deployment:
+
+We can create our cluster and then connect to the cluster. We can then create our deployment and get the external IP address
+which we set with our loadbalancer:
+
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl create deployment hello-world-rest-api --image=tomspencerlondon/hello-world-rest-api:0.0.4-SNAPSHOT
+Warning: Autopilot set default resource requests for Deployment default/hello-world-rest-api, as resource requests were not specified. See http://g.co/gke/autopilot-defaults
+deployment.apps/hello-world-rest-api created
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080 
+service/hello-world-rest-api exposed
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get services
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.50.128.237   <pending>     8080:30476/TCP   16s
+kubernetes             ClusterIP      10.50.128.1     <none>        443/TCP          26m
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get services --watch
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.50.128.237   34.70.221.222   8080:30476/TCP   65s
+kubernetes             ClusterIP      10.50.128.1     <none>          443/TCP          27m
+
+
+```
+We can then access the IP:
+![image](https://github.com/TomSpencerLondon/kubernetes-for-beginners/assets/27693622/ae429055-712c-45da-874b-4a896613ba8c)
+
+We can scale the amount of pods with:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl scale deployment hello-world-rest-api --replicas=3
+deployment.apps/hello-world-rest-api scaled
+```
 
 
 
