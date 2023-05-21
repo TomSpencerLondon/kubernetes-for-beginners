@@ -351,3 +351,19 @@ Events:
   Warning  InspectFailed  12s (x13 over 2m37s)  kubelet                                Failed to apply default image tag "DUMMY_IMAGE:TEST": couldn't parse image reference "DUMMY_IMAGE:TEST": invalid reference format: repository name must be lowercase
 ```
 
+The Deployment creates a new replicaset, but it failed to add one instance which means it is in failed set.
+A valid update succeeds:
+```bash
+tomspencerlondon@cloudshell:~$ kubectl set image deployment hello-world-rest-api hello-world-rest-api=in28min/hello-world-rest-api:0.0.2.RELEASE
+deployment.apps/hello-world-rest-api image updated
+tomspencerlondon@cloudshell:~$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-world-rest-api-8674b858bf-44gf7   1/1     Running   0          20s
+hello-world-rest-api-8674b858bf-l9857   1/1     Running   0          7s
+hello-world-rest-api-8674b858bf-n9r98   1/1     Running   0          14s
+tomspencerlondon@cloudshell:~$ kubectl get rs
+NAME                              DESIRED   CURRENT   READY   AGE
+hello-world-rest-api-5b4c66787d   0         0         0       10h
+hello-world-rest-api-77b5fbc7     0         0         0       6m5s
+hello-world-rest-api-8674b858bf   3         3         3       37s
+```
