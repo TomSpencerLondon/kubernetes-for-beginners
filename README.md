@@ -746,4 +746,53 @@ NAME                                    READY   STATUS    RESTARTS   AGE
 hello-world-rest-api-6649f4796d-n67fx   1/1     Running   0          14m
 hello-world-rest-api-6649f4796d-pwbcf   1/1     Running   0          6h3m
 ```
+We can delete our resources by label:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl delete all -l app=hello-world-rest-api
+pod "hello-world-rest-api-6649f4796d-k5wpb" deleted
+pod "hello-world-rest-api-6649f4796d-n67fx" deleted
+service "hello-world-rest-api" deleted
+deployment.apps "hello-world-rest-api" deleted
 
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get all
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.50.128.1   <none>        443/TCP   6h33m
+
+```
+
+We can also redeploy using our deployment.yaml:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl apply -f deployment.yaml
+Warning: Autopilot set default resource requests for Deployment default/hello-world-rest-api, as resource requests were not specified. See http://g.co/gke/autopilot-defaults
+deployment.apps/hello-world-rest-api created
+The Service "hello-world-rest-api" is invalid: spec.ports[0].nodePort: Invalid value: 30476: provided port is already allocated
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get all
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/hello-world-rest-api-6649f4796d-brt96   1/1     Running   0          6s
+pod/hello-world-rest-api-6649f4796d-htx6f   1/1     Running   0          6s
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.50.128.1   <none>        443/TCP   6h34m
+
+NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/hello-world-rest-api   2/2     2            2           6s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/hello-world-rest-api-6649f4796d   2         2         2       6s
+
+```
+
+We can find the service external ip:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ kubectl get service --watch
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+hello-world-rest-api   LoadBalancer   10.50.129.183   <pending>     8080:30476/TCP   32s
+kubernetes             ClusterIP      10.50.128.1     <none>        443/TCP          6h41m
+hello-world-rest-api   LoadBalancer   10.50.129.183   34.70.221.222   8080:30476/TCP   35s
+```
+
+We can also curl our hello-world application:
+```bash
+tom@tom-ubuntu:~/Projects/kubernetes-crash-course/01-hello-world-rest-api$ curl -w "\n" 34.70.221.222:8080/hello-world
+Hello World  V4 29lhx
+```
